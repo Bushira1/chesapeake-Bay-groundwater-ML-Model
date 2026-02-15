@@ -81,9 +81,14 @@ selected_key = st.sidebar.selectbox(
 st.sidebar.markdown("---")
 st.sidebar.subheader("Contact & Developer Info")
 st.sidebar.markdown("""
-**Kedir Bushira** *MS in Data Science* Eastern University  
+**Kedir Bushira, PhD** 
+(Data Scientist & Water Resources Engineer) 
 
-📫 [kdrmohammed@gmail.com](mailto:kdrmohammed@gmail.com)
+Email :[kdrmohammed@gmail.com](mailto:kdrmohammed@gmail.com)
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/kedir-bushira/)
+[![GitHub](https://img.shields.io/badge/GitHub-Repo-lightgrey?style=flat&logo=github)](https://github.com/Bushira1/chesapeake-Bay-groundwater-ML-Model/tree/main)
+""")
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/kedir-bushira/)
 [![GitHub](https://img.shields.io/badge/GitHub-Repo-lightgrey?style=flat&logo=github)](https://github.com/Bushira1/chesapeake-Bay-groundwater-ML-Model/tree/main)
@@ -202,4 +207,5 @@ else:
         fig_res.add_hline(y=0, line_dash="dash", line_color="black")
         fig_res.update_layout(template="plotly_white", xaxis=dict(dtick="M12", tickformat="%Y"), yaxis_title="Error (ft)")
         
+
         st.plotly_chart(fig_res, use_container_width=True)
