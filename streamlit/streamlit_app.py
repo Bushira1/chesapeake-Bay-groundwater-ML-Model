@@ -82,13 +82,9 @@ st.sidebar.markdown("---")
 st.sidebar.subheader("Contact & Developer Info")
 st.sidebar.markdown("""
 **Kedir Bushira, PhD** 
-(Data Scientist & Water Resources Engineer) 
+(Water Resources Engineer & Data Scientist) 
 
 Email :[kdrmohammed@gmail.com](mailto:kdrmohammed@gmail.com)
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/kedir-bushira/)
-[![GitHub](https://img.shields.io/badge/GitHub-Repo-lightgrey?style=flat&logo=github)](https://github.com/Bushira1/chesapeake-Bay-groundwater-ML-Model/tree/main)
-""")
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/kedir-bushira/)
 [![GitHub](https://img.shields.io/badge/GitHub-Repo-lightgrey?style=flat&logo=github)](https://github.com/Bushira1/chesapeake-Bay-groundwater-ML-Model/tree/main)
@@ -125,12 +121,11 @@ if st.session_state.selected_station == 'Home':
 
     st.divider()
     st.header("About the Project")
-    
     st.write("""
-    Groundwater is one of the most important resources that humans use to survive. In the Eastern Shore of Virginia, it is the sole resource used for human consumption (drinking) and crop irrigation, therefore managing groundwater is critical to both the residents living on the Shore and the agricultural community. The majority of both drinking and irrigation water is obtained from wells that tap into the Columbia and Yorktown – Eastover multi-aquifer system (Masterson et al., 2016).
+    Groundwater is one of the most important resources that humans use to survive. In the Eastern Shore of Virginia, it is the sole resource used for human consumption (drinking) and crop irrigation, therefore managing groundwater is critical to both the residents living on the Shore and the agricultural community. The majority of both drinking and irrigation water is obtained from wells that tap into the Columbia and Yorktown-Eastover multi-aquifer system (Masterson et al., 2016).
     """)
 
-    
+    # 
 
     st.write("""
     In 1997, the U.S. Environmental Protection Agency (EPA) designated this area as a Sole Source Aquifer due to the lack of any large-scale fresh-surface-water streams to be used as an alternate source of water (U.S. EPA, 1997). The primary factors that affect groundwater levels in this area include extraction rates of groundwater; and geologic structures such as the buried paleo-channels that include the Exmore and Eastville ancient river channels which can both significantly impact groundwater flow and increase the risk of saltwater intrusion (Powars et al., 2010). 
@@ -207,5 +202,4 @@ else:
         fig_res.add_hline(y=0, line_dash="dash", line_color="black")
         fig_res.update_layout(template="plotly_white", xaxis=dict(dtick="M12", tickformat="%Y"), yaxis_title="Error (ft)")
         
-
         st.plotly_chart(fig_res, use_container_width=True)
