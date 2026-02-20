@@ -39,7 +39,7 @@ well_details = {
     },
     'capecharles': {
         "id": "371543076003401", "coords": [37.2650, -76.0150],
-        "about": "The USGS 371543076003401 (62G 15 SOW 121) is a groundwater monitoring well in Northampton County, VA; Latitude / Longitude: 37.2621, -76.0089; with an elevation of approximately 10 ft and screened within the Northern Atlantic Coastal Plain aquifer system. This well is screened in the Yorktown-Eastover Middle Aquifer, which is a confined system. The well is 190 ft deep (hole depth of 240 ft). The lithology of the sediments transition from the shallow surficial sands to Pliocene-age fossiliferous marine sediments, composed of well-sorted sand, silt and dense shell beds that represent substantial water storage but are also subject to saltwater intrusion because of their proximity to the Chesapeake Bay."
+        "about": "The USGS 371543076003401 (62G 15 SOW 121) is a groundwater monitoring well in Northampton County, VA; Latitude / Longitude: 37.2621, -76.0089; with an elevation of approximately 10 ft and screened within the Northern Atlantic Coastal Plain aquifer system. This well is screened in the Yorktown-Eastover Middle Aquifer, which is a confined system. The well is 190 ft deep (hole depth of 240 ft). The lithology of the sediments transition from the shallow surficial sands to Pliocene-age fossiliferous marine sediments, composed of well-sorted_sand, silt and dense shell beds that represent substantial water storage but are also subject to saltwater intrusion because of their proximity to the Chesapeake Bay."
     }
 }
 
@@ -47,14 +47,17 @@ well_details = {
 def load_all_data():
     well_data, well_scores = {}, {}
     for w in well_map.keys():
-        pred_path = os.path.join(data_folder, f'model_predictions_{w}.pkl')
+        # UPDATED PATH: Based on your uploaded files (st_data_churchneck.pkl, etc)
+        pred_path = os.path.join(data_folder, f'st_data_{w}.pkl')
         if os.path.exists(pred_path):
             with open(pred_path, 'rb') as f:
                 df = pickle.load(f)
                 if 'Date' in df.columns: df = df.rename(columns={'Date': 'date'})
                 df['date'] = pd.to_datetime(df['date'])
                 well_data[w] = df
-        score_path = os.path.join(data_folder, f'model_scores_{w}.pkl')
+        
+        # UPDATED PATH: Based on your uploaded files (test_model_scores_churchneck.pkl, etc)
+        score_path = os.path.join(data_folder, f'test_model_scores_{w}.pkl')
         if os.path.exists(score_path):
             with open(score_path, 'rb') as f:
                 scores_dict = pickle.load(f)
@@ -81,8 +84,7 @@ selected_key = st.sidebar.selectbox(
 st.sidebar.markdown("---")
 st.sidebar.subheader("Contact & Developer Info")
 st.sidebar.markdown("""
-**Kedir Bushira, PhD** 
-(Water Resources Engineer & Data Scientist) 
+**Kedir Bushira, PhD** (Water Resources Engineer & Data Scientist) 
 
 Email :[kdrmohammed@gmail.com](mailto:kdrmohammed@gmail.com)
 
@@ -124,8 +126,6 @@ if st.session_state.selected_station == 'Home':
     st.write("""
     Groundwater is one of the most important resources that humans use to survive. In the Eastern Shore of Virginia, it is the sole resource used for human consumption (drinking) and crop irrigation, therefore managing groundwater is critical to both the residents living on the Shore and the agricultural community. The majority of both drinking and irrigation water is obtained from wells that tap into the Columbia and Yorktown-Eastover multi-aquifer system (Masterson et al., 2016).
     """)
-
-    # 
 
     st.write("""
     In 1997, the U.S. Environmental Protection Agency (EPA) designated this area as a Sole Source Aquifer due to the lack of any large-scale fresh-surface-water streams to be used as an alternate source of water (U.S. EPA, 1997). The primary factors that affect groundwater levels in this area include extraction rates of groundwater; and geologic structures such as the buried paleo-channels that include the Exmore and Eastville ancient river channels which can both significantly impact groundwater flow and increase the risk of saltwater intrusion (Powars et al., 2010). 
@@ -187,19 +187,22 @@ else:
         # 4. ERROR TRENDS
         st.divider()
         st.header("📉 Error Trend Analysis (Residuals)")
-        res_m = st.selectbox("Analyze Trend for:", available_models)
-        res_col = f"{res_m}_Pred" if f"{res_m}_Pred" in df.columns else res_m
-        res_df = df[['date', actual_col, res_col]].dropna().copy()
-        res_df['Residual'] = res_df[actual_col] - res_df[res_col]
-        
-        X_trend = np.array(range(len(res_df))).reshape(-1, 1)
-        trend_model = LinearRegression().fit(X_trend, res_df['Residual'].values)
-        res_df['Trend_Line'] = trend_model.predict(X_trend)
+        if available_models:
+            res_m = st.selectbox("Analyze Trend for:", available_models)
+            res_col = f"{res_m}_Pred" if f"{res_m}_Pred" in df.columns else res_m
+            res_df = df[['date', actual_col, res_col]].dropna().copy()
+            res_df['Residual'] = res_df[actual_col] - res_df[res_col]
+            
+            X_trend = np.array(range(len(res_df))).reshape(-1, 1)
+            trend_model = LinearRegression().fit(X_trend, res_df['Residual'].values)
+            res_df['Trend_Line'] = trend_model.predict(X_trend)
 
-        fig_res = go.Figure()
-        fig_res.add_trace(go.Scatter(x=res_df['date'], y=res_df['Residual'], mode='markers', marker=dict(opacity=0.3), name='Error'))
-        fig_res.add_trace(go.Scatter(x=res_df['date'], y=res_df['Trend_Line'], line=dict(color='orange', width=3), name='Trend'))
-        fig_res.add_hline(y=0, line_dash="dash", line_color="black")
-        fig_res.update_layout(template="plotly_white", xaxis=dict(dtick="M12", tickformat="%Y"), yaxis_title="Error (ft)")
-        
-        st.plotly_chart(fig_res, use_container_width=True)
+            fig_res = go.Figure()
+            fig_res.add_trace(go.Scatter(x=res_df['date'], y=res_df['Residual'], mode='markers', marker=dict(opacity=0.3), name='Error'))
+            fig_res.add_trace(go.Scatter(x=res_df['date'], y=res_df['Trend_Line'], line=dict(color='orange', width=3), name='Trend'))
+            fig_res.add_hline(y=0, line_dash="dash", line_color="black")
+            fig_res.update_layout(template="plotly_white", xaxis=dict(dtick="M12", tickformat="%Y"), yaxis_title="Error (ft)")
+            
+            st.plotly_chart(fig_res, use_container_width=True)
+    else:
+        st.error(f"⚠️ Data file not found! Please check that 'st_data_{current_well}.pkl' is in the folder: {data_folder}")
