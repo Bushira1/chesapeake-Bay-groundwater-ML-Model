@@ -47,7 +47,6 @@ well_details = {
 def load_all_data():
     well_data, well_scores = {}, {}
     for w in well_map.keys():
-        # UPDATED PATH: Based on your uploaded files (st_data_churchneck.pkl, etc)
         pred_path = os.path.join(data_folder, f'st_data_{w}.pkl')
         if os.path.exists(pred_path):
             with open(pred_path, 'rb') as f:
@@ -56,7 +55,6 @@ def load_all_data():
                 df['date'] = pd.to_datetime(df['date'])
                 well_data[w] = df
         
-        # UPDATED PATH: Based on your uploaded files (test_model_scores_churchneck.pkl, etc)
         score_path = os.path.join(data_folder, f'test_model_scores_{w}.pkl')
         if os.path.exists(score_path):
             with open(score_path, 'rb') as f:
@@ -69,9 +67,14 @@ def load_all_data():
 well_data, well_scores = load_all_data()
 
 # --- 2. SIDEBAR NAVIGATION & PERSONAL INFO ---
-st.sidebar.title("Well Locations")
+st.sidebar.title("Navigation & Tools")
 
-st.sidebar.info("To see exact site locations, hover over the drops on the map. You can click a marker to navigate directly to that well's analysis.")
+st.sidebar.info("""
+**📖 Quick Start Guide**
+1. **Explore:** Use the map or dropdown to select a well.
+2. **Compare:** Choose between MLR, CNN, or LSTM models.
+3. **Analyze:** View forecast accuracy and error trends.
+""")
 
 options = ['Home'] + list(well_map.keys())
 selected_key = st.sidebar.selectbox(
@@ -101,6 +104,17 @@ if st.session_state.selected_station == 'Home':
     st.title("Groundwater Level Forecast: Virginia Eastern Shore")
     st.markdown("#### *This project was completed as part of the Eastern University MS in Data Science Capstone Project.*")
     
+    with st.expander("ℹ️ How to use this forecasting tool"):
+        st.markdown("""
+        Welcome to the Groundwater Forecasting dashboard. This tool allows you to visualize 
+        and compare different Machine Learning model predictions for 4 critical USGS monitoring wells.
+        
+        - **Interactive Map:** Hover over markers to see well IDs. **Click a marker** to jump to that well's analysis.
+        - **Well Analysis:** Once a well is selected, use the 'Select Models' box to toggle between different prediction architectures.
+        - **Understanding Depth:** Note that the Y-axis is **reversed**. Values closer to 0 represent water closer to the surface.
+        - **Error Trends:** Scroll to the bottom of any well page to see how model accuracy has changed over time.
+        """)
+    
     st.write("---")
     m = folium.Map(location=[37.6, -75.7], zoom_start=9, tiles="cartodbpositron")
     for key, info in well_details.items():
@@ -113,7 +127,6 @@ if st.session_state.selected_station == 'Home':
     
     map_data = st_folium(m, height=450, width="100%", key="main_map")
     
-    # Click Navigation logic
     if map_data and map_data.get("last_object_clicked_tooltip"):
         clicked_text = map_data["last_object_clicked_tooltip"].lower()
         for key in well_map.keys():
@@ -129,7 +142,7 @@ if st.session_state.selected_station == 'Home':
 
     st.write("""
     In 1997, the U.S. Environmental Protection Agency (EPA) designated this area as a Sole Source Aquifer due to the lack of any large-scale fresh-surface-water streams to be used as an alternate source of water (U.S. EPA, 1997). The primary factors that affect groundwater levels in this area include extraction rates of groundwater; and geologic structures such as the buried paleo-channels that include the Exmore and Eastville ancient river channels which can both significantly impact groundwater flow and increase the risk of saltwater intrusion (Powars et al., 2010). 
-             
+               
     Previous studies have demonstrated that machine learning, deep learning, and time-series analysis have been successful in identifying the complex nonlinear patterns in hydrogeologic data. This project implemented and compared Multiple Linear Regression (MLR), a baseline model, with more advanced deep learning architectures, specifically Convolutional Neural Networks (CNN) and Long Short-Term Memory (LSTM) networks.
     """)
 
@@ -144,11 +157,9 @@ if st.session_state.selected_station == 'Home':
     """)
 
 else:
-    # --- INDIVIDUAL WELL ANALYSIS ---
     current_well = st.session_state.selected_station
     st.title(well_map[current_well])
     
-    # 1. About the Well
     st.subheader("About the Well")
     st.info(well_details[current_well]['about'])
     
@@ -161,48 +172,81 @@ else:
         actual_col = 'Actual' if 'Actual' in df.columns else 'gw_depth_ft'
         available_models = [c.replace('_Pred', '') for c in df.columns if '_Pred' in c]
 
-        # 2. FORECAST PLOT
         st.header("📈 Groundwater Level Forecast")
-        selected_traces = st.multiselect('Select Models:', ['Actual'] + available_models, default=['Actual', 'LSTM'])
+        selected_traces = st.multiselect('Select Models to Compare:', ['Actual'] + available_models, 
+                                          default=['Actual', 'LSTM'],
+                                          help="Check/Uncheck models to visualize their predictions against real observed data.")
+        
         fig = go.Figure()
         if 'Actual' in selected_traces:
-            fig.add_trace(go.Scatter(x=df['date'], y=df[actual_col], name='Observed', line=dict(color='black')))
+            fig.add_trace(go.Scatter(x=df['date'], y=df[actual_col], name='Observed (Actual)', line=dict(color='black', width=2)))
         
         colors = {'MLR': 'blue', 'CNN': 'green', 'LSTM': 'red'}
         for m in available_models:
             if m in selected_traces:
                 c_n = f"{m}_Pred" if f"{m}_Pred" in df.columns else m
-                fig.add_trace(go.Scatter(x=df['date'], y=df[c_n], name=m, line=dict(color=colors.get(m))))
+                fig.add_trace(go.Scatter(x=df['date'], y=df[c_n], name=f'{m} Prediction', line=dict(color=colors.get(m), dash='dot')))
         
-        fig.update_layout(template="plotly_white", yaxis=dict(autorange="reversed", title="Depth (ft)"),
-                          xaxis=dict(dtick="M12", tickformat="%Y", range=[df['date'].min(), "2026-12-31"]))
+        fig.update_layout(template="plotly_white", 
+                          yaxis=dict(autorange="reversed", title="Depth Below Land Surface (ft)"),
+                          xaxis=dict(dtick="M12", tickformat="%Y", range=[df['date'].min(), "2026-12-31"]),
+                          legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         
         st.plotly_chart(fig, use_container_width=True)
 
-        # 3. Score Report
         if current_well in well_scores:
             st.subheader("Model Performance Scores")
+            st.markdown("*R² represents accuracy (closer to 1.0 is better). RMSE represents the average error in feet.*")
             st.dataframe(well_scores[current_well], hide_index=True)
 
-        # 4. ERROR TRENDS
         st.divider()
         st.header("📉 Error Trend Analysis (Residuals)")
+        
+        # --- ADDED: EDUCATIONAL EXPLANATION ---
+        st.info("""
+        **What is Error Trend Analysis?**
+        This plot shows the 'Residuals' (Actual Depth minus Predicted Depth). 
+        * **The Black Dashed Line (0):** Represents a perfect prediction.
+        * **Blue Dots:** Represent daily errors. If a dot is above 0, the model under-predicted; below 0 means it over-predicted.
+        * **The Orange Line:** Shows the 'average' error trend over time. We want this line to be as flat and as close to zero as possible.
+        """)
+
         if available_models:
-            res_m = st.selectbox("Analyze Trend for:", available_models)
+            res_m = st.selectbox("Analyze Error Trend for:", available_models, 
+                                 help="A flat trend line near zero suggests a consistent model. An upward or downward trend indicates seasonal bias.")
             res_col = f"{res_m}_Pred" if f"{res_m}_Pred" in df.columns else res_m
             res_df = df[['date', actual_col, res_col]].dropna().copy()
             res_df['Residual'] = res_df[actual_col] - res_df[res_col]
             
+            # Calculate Trend
             X_trend = np.array(range(len(res_df))).reshape(-1, 1)
             trend_model = LinearRegression().fit(X_trend, res_df['Residual'].values)
+            slope = trend_model.coef_[0]
             res_df['Trend_Line'] = trend_model.predict(X_trend)
 
             fig_res = go.Figure()
-            fig_res.add_trace(go.Scatter(x=res_df['date'], y=res_df['Residual'], mode='markers', marker=dict(opacity=0.3), name='Error'))
-            fig_res.add_trace(go.Scatter(x=res_df['date'], y=res_df['Trend_Line'], line=dict(color='orange', width=3), name='Trend'))
+            fig_res.add_trace(go.Scatter(x=res_df['date'], y=res_df['Residual'], mode='markers', marker=dict(opacity=0.3, color='steelblue'), name='Daily Error'))
+            fig_res.add_trace(go.Scatter(x=res_df['date'], y=res_df['Trend_Line'], line=dict(color='orange', width=3), name='Error Trend'))
             fig_res.add_hline(y=0, line_dash="dash", line_color="black")
-            fig_res.update_layout(template="plotly_white", xaxis=dict(dtick="M12", tickformat="%Y"), yaxis_title="Error (ft)")
+            fig_res.update_layout(template="plotly_white", xaxis=dict(dtick="M12", tickformat="%Y"), yaxis_title="Error (Actual - Predicted) [ft]")
             
             st.plotly_chart(fig_res, use_container_width=True)
+
+            # --- ADDED: DYNAMIC INTERPRETATION ---
+            st.subheader(f"How is the {res_m} model performing?")
+            
+            if abs(slope) < 0.0001:
+                st.success(f"✅ **Stable Model:** The error trend is nearly flat. This suggests the model is capturing the aquifer's behavior consistently over time.")
+            elif slope > 0:
+                st.warning(f"📈 **Positive Drift:** The trend is slightly increasing. The model may be starting to under-predict water levels (actual levels are higher than predicted).")
+            else:
+                st.warning(f"📉 **Negative Drift:** The trend is decreasing. The model may be predicting water levels are deeper than they actually are as time progresses.")
+            
+            st.markdown("""
+            **Patterns to look for:**
+            * **Waves:** If dots form wave patterns, the model is struggling with seasonal pumping or weather cycles.
+            * **Random Cloud:** If dots form a random cloud around zero, the model is very robust and well-calibrated.
+            """)
+            
     else:
         st.error(f"⚠️ Data file not found! Please check that 'st_data_{current_well}.pkl' is in the folder: {data_folder}")
